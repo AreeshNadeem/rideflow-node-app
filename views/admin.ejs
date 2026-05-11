@@ -1,0 +1,117 @@
+<%- include('partials_header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Admin Analytics Dashboard</h2>
+    <p class="text-muted mb-0">Live reports from MySQL views, triggers, and reporting queries.</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-2"><div class="card stat-card"><div class="card-body"><p>Users</p><h3><%= stats.usersCount.count %></h3></div></div></div>
+  <div class="col-md-2"><div class="card stat-card"><div class="card-body"><p>Rides</p><h3><%= stats.ridesCount.count %></h3></div></div></div>
+  <div class="col-md-3"><div class="card stat-card"><div class="card-body"><p>Paid Revenue</p><h3>PKR <%= Number(stats.revenue.total || 0).toFixed(0) %></h3></div></div></div>
+  <div class="col-md-2"><div class="card stat-card"><div class="card-body"><p>Drivers</p><h3><%= stats.driversCount.count %></h3></div></div></div>
+  <div class="col-md-3"><div class="card stat-card"><div class="card-body"><p>Open Complaints</p><h3><%= stats.openComplaints.count %></h3></div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Revenue by City</h5><div style="position:relative;height:200px"><canvas id="revenueChart"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Payment Method Breakdown</h5><div style="position:relative;height:200px"><canvas id="paymentChart"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Ride Status Breakdown</h5><div style="position:relative;height:200px"><canvas id="statusChart"></canvas></div></div></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Top Drivers / Leaderboard</h5><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Driver</th><th>City</th><th>Rating</th><th>Trips</th></tr></thead><tbody>
+    <% topDrivers.forEach(d => { %><tr><td><%= d.driver_name %></td><td><%= d.city || '-' %></td><td><span class="badge text-bg-success"><%= d.average_rating || '-' %></span></td><td><%= d.completed_trips %></td></tr><% }) %>
+  </tbody></table></div></div></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Active Rides View</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>ID</th><th>Rider</th><th>Driver</th><th>Status</th><th>Route</th></tr></thead><tbody>
+    <% activeRides.forEach(r => { %><tr><td><%= r.ride_id %></td><td><%= r.rider_name %></td><td><%= r.driver_name || '-' %></td><td><%= r.ride_status.replace(/_/g,' ') %></td><td><%= r.pickup_city %> &rarr; <%= r.dropoff_city %></td></tr><% }) %>
+    <% if (!activeRides.length) { %><tr><td colspan="5" class="text-muted">No active rides right now.</td></tr><% } %>
+  </tbody></table></div></div></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Admin Notifications</h5>
+    <% notifications.forEach(n => { %><div class="alert alert-warning py-2"><b><%= n.title %></b><br><small><%= n.message %></small></div><% }) %>
+    <% if (!notifications.length) { %><p class="text-muted">No notifications yet.</p><% } %>
+  </div></div></div>
+</div>
+
+<hr class="my-4">
+
+<div class="row g-4">
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Manage Users</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Update</th></tr></thead><tbody>
+    <% users.forEach(u => { %><tr><td><%= u.first_name %> <%= u.last_name %></td><td><%= u.email %></td><td><%= u.role %></td><td><%= u.account_status %></td><td><form method="POST" action="/admin/user-status" class="d-flex gap-1"><input type="hidden" name="user_id" value="<%= u.user_id %>"><select name="account_status" class="form-select form-select-sm"><option value="active">active</option><option value="suspended">suspended</option><option value="banned">banned</option></select><button class="btn btn-sm btn-primary">Save</button></form></td></tr><% }) %>
+  </tbody></table></div></div></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Manage Vehicles</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Plate</th><th>Driver</th><th>Type</th><th>Status</th><th>Update</th></tr></thead><tbody>
+    <% vehicles.forEach(v => { %><tr><td><%= v.license_plate %></td><td><%= v.driver_name %></td><td><%= v.vehicle_type %></td><td><%= v.verification_status %></td><td><form method="POST" action="/admin/vehicle-status" class="d-flex gap-1"><input type="hidden" name="vehicle_id" value="<%= v.vehicle_id %>"><select name="verification_status" class="form-select form-select-sm"><option value="verified">verified</option><option value="pending">pending</option><option value="rejected">rejected</option></select><button class="btn btn-sm btn-primary">Save</button></form></td></tr><% }) %>
+  </tbody></table></div></div></div></div>
+  <div class="col-12"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Configure Fare Rules</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>City</th><th>Vehicle</th><th>Base</th><th>Per KM</th><th>Per Min</th><th>Surge</th><th></th></tr></thead><tbody>
+    <% pricing.forEach(p => { %><tr><form method="POST" action="/admin/pricing"><input type="hidden" name="pricing_rule_id" value="<%= p.pricing_rule_id %>"><td><%= p.city %></td><td><%= p.vehicle_type %></td><td><input name="base_rate" value="<%= p.base_rate %>" class="form-control form-control-sm"></td><td><input name="per_km_rate" value="<%= p.per_km_rate %>" class="form-control form-control-sm"></td><td><input name="per_minute_rate" value="<%= p.per_minute_rate %>" class="form-control form-control-sm"></td><td><input name="surge_multiplier" value="<%= p.surge_multiplier %>" class="form-control form-control-sm"></td><td><button class="btn btn-sm btn-success">Update</button></td></form></tr><% }) %>
+  </tbody></table></div></div></div></div>
+  <div class="col-12"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Complaints / Disputes</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>ID</th><th>Filed By</th><th>Against</th><th>Type</th><th>Status</th><th>Description</th><th>Action</th></tr></thead><tbody>
+    <% complaints.forEach(c => { %><tr><td><%= c.complaint_id %></td><td><%= c.filed_by_name %></td><td><%= c.reported_name || '-' %></td><td><%= c.complaint_type %></td><td><%= c.status %></td><td><%= c.description %></td><td><form method="POST" action="/admin/complaint-status" class="d-flex gap-1"><input type="hidden" name="complaint_id" value="<%= c.complaint_id %>"><select name="status" class="form-select form-select-sm"><option value="in_review">in_review</option><option value="resolved">resolved</option><option value="rejected">rejected</option></select><input name="admin_action" class="form-control form-control-sm" placeholder="Admin action"><button class="btn btn-sm btn-primary">Save</button></form></td></tr><% }) %>
+    <% if (!complaints.length) { %><tr><td colspan="7" class="text-muted">No complaints yet.</td></tr><% } %>
+  </tbody></table></div></div></div></div>
+
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>Driver Payout Requests</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Driver</th><th>Amount</th><th>Status</th><th>Requested</th></tr></thead><tbody>
+    <% payouts.forEach(p => { %><tr>
+      <td><%= p.driver_name %></td>
+      <td>PKR <%= Number(p.amount).toFixed(2) %></td>
+      <td><span class="badge <%= p.payout_status === 'paid' ? 'bg-success' : p.payout_status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>"><%= p.payout_status %></span></td>
+      <td><%= new Date(p.requested_at).toLocaleDateString() %></td>
+    </tr><% }) %>
+    <% if (!payouts.length) { %><tr><td colspan="4" class="text-muted">No payout requests yet.</td></tr><% } %>
+  </tbody></table></div></div></div></div>
+
+  <div class="col-lg-6"><div class="card shadow-sm rounded-4"><div class="card-body"><h5>All Ratings</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Ride</th><th>Rated By</th><th>Rated</th><th>Score</th><th>Comment</th><th>Date</th></tr></thead><tbody>
+    <% ratings.forEach(r => { %><tr>
+      <td>#<%= r.ride_id %></td>
+      <td><%= r.rated_by_name %></td>
+      <td><%= r.rated_user_name %></td>
+      <td><span class="badge bg-<%= r.score >= 4 ? 'success' : r.score === 3 ? 'warning text-dark' : 'danger' %>">⭐ <%= r.score %></span></td>
+      <td><%= r.comment_text || '-' %></td>
+      <td><%= new Date(r.rating_timestamp).toLocaleDateString() %></td>
+    </tr><% }) %>
+    <% if (!ratings.length) { %><tr><td colspan="6" class="text-muted">No ratings yet.</td></tr><% } %>
+  </tbody></table></div></div></div></div>
+</div>
+
+<script id="chartData" type="application/json">
+<%- JSON.stringify({
+  revenue: revenueByCity.map(r => ({ city: r.city, total: Number(r.total_revenue || 0) })),
+  payment: paymentBreakdown.map(r => ({ method: r.payment_method, amount: Number(r.total_amount || 0) })),
+  status:  rideStatusBreakdown.map(r => ({ label: r.ride_status, total: Number(r.total || 0) }))
+}) %>
+</script>
+<script>
+const _d = JSON.parse(document.getElementById('chartData').textContent);
+
+const rfColors = ['#0A4174','#49769F','#4E8EA2','#6EA2B3','#7BBDE8','#BDD8E9','#001D39'];
+
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: _d.revenue.map(r => r.city),
+    datasets: [{ label: 'Revenue (PKR)', data: _d.revenue.map(r => r.total),
+      backgroundColor: 'rgba(10,65,116,0.8)', borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { y: { grid: { color: 'rgba(189,216,233,0.3)' } }, x: { grid: { display: false } } } }
+});
+
+new Chart(document.getElementById('paymentChart'), {
+  type: 'doughnut',
+  data: {
+    labels: _d.payment.map(r => r.method),
+    datasets: [{ label: 'Amount (PKR)', data: _d.payment.map(r => r.amount),
+      backgroundColor: ['#0A4174','#4E8EA2','#7BBDE8'], borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom' } } }
+});
+
+new Chart(document.getElementById('statusChart'), {
+  type: 'pie',
+  data: {
+    labels: _d.status.map(r => r.label),
+    datasets: [{ label: 'Rides', data: _d.status.map(r => r.total),
+      backgroundColor: rfColors, borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+});
+</script>
+<%- include('partials_footer') %>

@@ -1,0 +1,132 @@
+<%- include('partials_header') %>
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card shadow-sm rounded-4 mb-4">
+      <div class="card-body">
+        <h3>Rider Dashboard</h3>
+        <p class="text-muted mb-2">Wallet Balance</p>
+        <h2>PKR <%= wallet ? Number(wallet.balance).toFixed(2) : '0.00' %></h2>
+        <form method="POST" action="/rider/wallet-topup" class="d-flex gap-2 mt-3">
+          <input type="number" step="0.01" min="1" name="amount" class="form-control" placeholder="Top-up amount" required>
+          <button class="btn btn-success">Add</button>
+        </form>
+      </div>
+    </div>
+    <div class="card shadow-sm rounded-4 mb-4">
+      <div class="card-body">
+        <h5>Book a Ride</h5>
+        <form method="POST" action="/rider/book">
+          <label class="form-label mt-2">Pickup</label>
+          <select name="pickup_location_id" class="form-select" required>
+            <% locations.forEach(l => { %><option value="<%= l.location_id %>"><%= l.label %> - <%= l.city %></option><% }) %>
+          </select>
+          <label class="form-label mt-2">Dropoff</label>
+          <select name="dropoff_location_id" class="form-select" required>
+            <% locations.forEach(l => { %><option value="<%= l.location_id %>"><%= l.label %> - <%= l.city %></option><% }) %>
+          </select>
+          <label class="form-label mt-2">Schedule Time optional</label>
+          <input type="datetime-local" name="scheduled_time" class="form-control">
+          <button class="btn btn-primary mt-3 w-100">Request Ride</button>
+        </form>
+      </div>
+    </div>
+    <div class="card shadow-sm rounded-4">
+      <div class="card-body">
+        <h5>Active Promo Codes</h5>
+        <% promos.forEach(p => { %>
+          <div class="border rounded-3 p-2 mb-2"><b><%= p.code %></b><br><small><%= p.discount_type %> · <%= p.discount_value %></small></div>
+        <% }) %>
+        <% if (!promos.length) { %><p class="text-muted">No active promos.</p><% } %>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <% const pendingPayments = rides.filter(r => r.ride_status === 'payment_pending'); %>
+    <% if (pendingPayments.length > 0) { %>
+    <div class="card border-warning shadow rounded-4 mb-4">
+      <div class="card-body">
+        <h5 class="fw-bold" style="color:var(--rf-700)">Payment Due</h5>
+        <% pendingPayments.forEach(r => { %>
+        <div class="border border-warning rounded-3 p-3 mb-2 bg-warning bg-opacity-10">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <strong>Ride #<%= r.ride_id %></strong> &mdash; <%= r.pickup_label %> &rarr; <%= r.dropoff_label %>
+              <br><small class="text-muted">Driver: <%= r.driver_name %> &nbsp;|&nbsp; Distance: <%= r.distance_km %> km &nbsp;|&nbsp; Duration: <%= r.duration_min %> min</small>
+            </div>
+            <span class="badge bg-warning text-dark fs-6">PKR <%= Number(r.fare || 0).toFixed(2) %></span>
+          </div>
+          <form method="POST" action="/rider/pay" class="row g-2 align-items-end">
+            <input type="hidden" name="ride_id" value="<%= r.ride_id %>">
+            <div class="col-md-4">
+              <label class="form-label mb-1 small fw-semibold">Payment Method</label>
+              <select name="payment_method" class="form-select form-select-sm" required>
+                <option value="wallet">Wallet (PKR <%= wallet ? Number(wallet.balance).toFixed(2) : '0.00' %>)</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label mb-1 small fw-semibold">Promo Code <span class="text-muted">(optional)</span></label>
+              <input name="promo_code" class="form-control form-control-sm" placeholder="e.g. SAVE10">
+            </div>
+            <div class="col-md-4">
+              <button class="btn btn-warning w-100 fw-bold">Pay Now</button>
+            </div>
+          </form>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+    <div class="card shadow-sm rounded-4 mb-4">
+      <div class="card-body">
+        <h5>My Ride History</h5>
+        <div class="table-responsive">
+          <table class="table align-middle table-hover">
+            <thead><tr><th>ID</th><th>Route</th><th>Driver</th><th>Status</th><th>Payment</th><th>Fare</th><th>Rating</th></tr></thead>
+            <tbody>
+              <% rides.forEach(r => { %>
+              <tr>
+                <td><%= r.ride_id %></td>
+                <td><%= r.pickup_label %> → <%= r.dropoff_label %><br><small><%= r.pickup_city %> to <%= r.dropoff_city %></small></td>
+                <td><%= r.driver_name || 'Pending' %></td>
+                <td><span class="badge text-bg-secondary"><%= r.ride_status.replace(/_/g,' ') %></span></td>
+                <td><%= r.payment_status || '-' %></td>
+                <td><%= r.paid_amount || r.fare || 0 %></td>
+                <td>
+                  <% if (['requested','accepted'].includes(r.ride_status)) { %>
+                    <form method="POST" action="/rider/cancel/<%= r.ride_id %>"><button class="btn btn-sm btn-outline-danger">Cancel</button></form>
+                  <% } %>
+                  <% if (r.ride_status === 'completed' && r.driver_id) { %>
+                    <form method="POST" action="/rider/rate" class="d-flex gap-1 mt-1">
+                      <input type="hidden" name="ride_id" value="<%= r.ride_id %>">
+                      <input type="hidden" name="rated_user_id" value="<%= r.driver_id %>">
+                      <select name="score" class="form-select form-select-sm" style="width:80px"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select>
+                      <input name="comment_text" class="form-control form-control-sm" placeholder="comment">
+                      <button class="btn btn-sm btn-success">Rate</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+              <% }) %>
+              <% if (!rides.length) { %><tr><td colspan="7" class="text-muted">No rides yet. Book your first ride.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card shadow-sm rounded-4">
+      <div class="card-body">
+        <h5>File a Complaint</h5>
+        <form method="POST" action="/rider/complaint" class="row g-2">
+          <div class="col-md-3"><input name="ride_id" class="form-control" placeholder="Ride ID optional"></div>
+          <div class="col-md-3"><input name="reported_against_user_id" class="form-control" placeholder="Against User ID optional"></div>
+          <div class="col-md-3"><input name="complaint_type" class="form-control" placeholder="Type" required></div>
+          <div class="col-md-9"><input name="description" class="form-control" placeholder="Describe the issue" required></div>
+          <div class="col-md-3"><button class="btn btn-warning w-100">Submit Complaint</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('partials_footer') %>

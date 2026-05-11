@@ -1,0 +1,28 @@
+<%- include('partials_header') %>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">Ride<span>Flow</span></div>
+    <p class="login-sub">Intelligent ride-hailing platform. Sign in to your dashboard.</p>
+
+    <% if (flash) { %>
+      <div class="alert alert-<%= flash.type %> mb-3"><%= flash.message %></div>
+    <% } %>
+
+    <form method="POST" action="/login">
+      <div class="mb-3">
+        <label class="form-label">Email Address</label>
+        <input type="email" name="email" id="loginEmail" class="form-control" required placeholder="your@email.com">
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" id="loginPassword" class="form-control" required placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary w-100" style="padding:0.6rem;font-size:0.95rem;" id="loginBtn">Sign In</button>
+    </form>
+
+    <hr class="my-4">
+
+    
+  </div>
+</div>
+<%- include('partials_footer') %>

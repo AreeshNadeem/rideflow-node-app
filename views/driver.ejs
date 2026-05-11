@@ -1,0 +1,120 @@
+<%- include('partials_header') %>
+<div class="row g-4">
+  <div class="col-lg-3">
+    <div class="card shadow-sm rounded-4 mb-4"><div class="card-body">
+      <h3>Driver Dashboard</h3>
+      <p>Status: <span class="badge text-bg-info"><%= driver.availability_status %></span></p>
+      <form method="POST" action="/driver/availability" class="d-flex gap-2">
+        <select name="availability_status" class="form-select">
+          <option value="online">online</option><option value="offline">offline</option><option value="on_trip">on_trip</option>
+        </select><button class="btn btn-primary">Update</button>
+      </form>
+    </div></div>
+    <div class="card shadow-sm rounded-4"><div class="card-body">
+      <h5>Earnings</h5>
+      <h3>PKR <%= Number(earningSummary.total_earnings || 0).toFixed(2) %></h3>
+      <p class="text-muted"><%= earningSummary.earning_count %> earning records</p>
+      <form method="POST" action="/driver/payout" class="d-flex gap-2">
+        <input name="amount" type="number" step="0.01" class="form-control" placeholder="Amount" required>
+        <button class="btn btn-success">Payout</button>
+      </form>
+      <% if (payouts.length > 0) { %>
+      <hr class="my-2">
+      <p class="small fw-semibold mb-1">Payout Requests</p>
+      <% payouts.forEach(p => { %>
+        <div class="d-flex justify-content-between align-items-center border rounded px-2 py-1 mb-1" style="font-size:0.82rem">
+          <span class="fw-semibold">PKR <%= Number(p.amount).toFixed(2) %></span>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted"><%= new Date(p.requested_at).toLocaleDateString() %></span>
+            <span class="badge <%= p.payout_status === 'paid' ? 'bg-success' : p.payout_status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>"><%= p.payout_status %></span>
+          </div>
+        </div>
+      <% }) %>
+      <% } %>
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm rounded-4"><div class="card-body">
+      <h5>Available Ride Requests</h5>
+      <% if (driver.availability_status === 'offline') { %>
+        <div class="alert alert-secondary d-flex align-items-center gap-2 mb-0">
+          <div>You are <strong>offline</strong>. Switch to <strong>Online</strong> to start receiving ride requests.</div>
+        </div>
+      <% } else if (driver.availability_status === 'on_trip') { %>
+        <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+          <div>You are currently <strong>on a trip</strong>. Complete your active ride before accepting a new one.</div>
+        </div>
+      <% } else { %>
+        <% if (!vehicles.length) { %><div class="alert alert-warning">No verified vehicle found for this driver.</div><% } %>
+        <div class="table-responsive"><table class="table table-hover">
+          <thead><tr><th>Ride</th><th>Rider</th><th>Route</th><th>Action</th></tr></thead><tbody>
+          <% requested.forEach(r => { %>
+            <tr><td><%= r.ride_id %></td><td><%= r.rider_name %></td><td><%= r.pickup_label %> → <%= r.dropoff_label %></td><td>
+              <form method="POST" action="/driver/accept/<%= r.ride_id %>" class="mb-1">
+                <select name="vehicle_id" class="form-select form-select-sm mb-1">
+                  <% vehicles.forEach(v => { %><option value="<%= v.vehicle_id %>"><%= v.license_plate %> · <%= v.vehicle_type %></option><% }) %>
+                </select>
+                <button class="btn btn-sm btn-primary" <%= vehicles.length ? '' : 'disabled' %>>Accept</button>
+              </form>
+              <form method="POST" action="/driver/reject/<%= r.ride_id %>"><button class="btn btn-sm btn-outline-secondary">Reject</button></form>
+            </td></tr>
+          <% }) %>
+          <% if (!requested.length) { %><tr><td colspan="4" class="text-muted">No ride requests right now. Stay online!</td></tr><% } %>
+          </tbody></table></div>
+      <% } %>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm rounded-4"><div class="card-body">
+      <h5>My Trips</h5>
+      <% myRides.forEach(r => { %>
+        <div class="border rounded-3 p-2 mb-2">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <b style="color:var(--rf-700)">#<%= r.ride_id %></b>
+            <span style="font-size:0.75rem;font-weight:600;color:var(--rf-400);text-transform:capitalize;letter-spacing:0.04em"><%= r.ride_status.replace(/_/g,' ') %></span>
+          </div>
+          <small class="text-muted"><%= r.rider_name %> &middot; <%= r.pickup_label %> &rarr; <%= r.dropoff_label %></small>
+          <% if (r.ride_status === 'accepted') { %>
+            <form method="POST" action="/driver/start/<%= r.ride_id %>" class="mt-2"><button class="btn btn-sm btn-warning">Start Ride</button></form>
+          <% } %>
+          <% if (r.ride_status === 'in_progress') { %>
+            <form method="POST" action="/driver/complete/<%= r.ride_id %>" class="row g-1 mt-2">
+              <div class="col"><input name="distance_km" type="number" step="0.01" class="form-control form-control-sm" placeholder="KM" required></div>
+              <div class="col"><input name="duration_min" type="number" class="form-control form-control-sm" placeholder="Min" required></div>
+              <div class="col-12"><button class="btn btn-sm btn-success w-100">Finalize Ride</button></div>
+            </form>
+          <% } %>
+          <% if (r.ride_status === 'payment_pending') { %>
+            <p class="mb-0 mt-2" style="font-size:0.78rem;color:var(--rf-400);font-weight:500">Awaiting rider payment.</p>
+          <% } %>
+          <% if (r.ride_status === 'completed') { %>
+            <form method="POST" action="/driver/rate" class="row g-1 mt-2">
+              <input type="hidden" name="ride_id" value="<%= r.ride_id %>">
+              <input type="hidden" name="rated_user_id" value="<%= r.rider_id %>">
+              <div class="col-4"><select name="score" class="form-select form-select-sm"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+              <div class="col-8"><input name="comment_text" class="form-control form-control-sm" placeholder="Rate rider"></div>
+              <div class="col-12"><button class="btn btn-sm btn-outline-success w-100">Submit Rating</button></div>
+            </form>
+          <% } %>
+        </div>
+      <% }) %>
+      <% if (!myRides.length) { %><p class="text-muted">No trips assigned yet.</p><% } %>
+    </div></div>
+  </div>
+</div>
+<div class="row g-4 mt-1">
+  <div class="col-12">
+    <div class="card shadow-sm rounded-4"><div class="card-body">
+      <h5>File a Complaint About a Rider</h5>
+      <p class="text-muted small mb-2">Use this if a rider was rude, made a false complaint, or violated platform rules.</p>
+      <form method="POST" action="/driver/complaint" class="row g-2">
+        <div class="col-md-2"><input name="ride_id" class="form-control" placeholder="Ride ID (optional)"></div>
+        <div class="col-md-3"><input name="reported_against_user_id" class="form-control" placeholder="Rider User ID (optional)"></div>
+        <div class="col-md-3"><input name="complaint_type" class="form-control" placeholder="Type e.g. misconduct" required></div>
+        <div class="col-md-9"><input name="description" class="form-control" placeholder="Describe the issue" required></div>
+        <div class="col-md-3"><button class="btn btn-warning w-100">Submit Complaint</button></div>
+      </form>
+    </div></div>
+  </div>
+</div>
+<%- include('partials_footer') %>
