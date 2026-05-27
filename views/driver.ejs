@@ -1,15 +1,185 @@
 <%- include('partials_header') %>
+
+<!-- ═══════════════════════════════════════════════
+     DRIVER PROFILE BANNER
+═══════════════════════════════════════════════ -->
+<div class="driver-profile-banner mb-4">
+  <div class="dpb-left">
+    <div class="dpb-avatar">
+      <%= userInfo.first_name.charAt(0) %><%= userInfo.last_name.charAt(0) %>
+    </div>
+    <div>
+      <h1 class="dpb-name"><%= userInfo.first_name %> <%= userInfo.last_name %></h1>
+      <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+        <span class="dpb-role-badge">Driver</span>
+        <span class="badge <%= driver.verification_status === 'verified' ? 'bg-success' : driver.verification_status === 'rejected' ? 'bg-danger' : 'bg-warning' %>">
+          <%= driver.verification_status === 'verified' ? '✓ Verified' : driver.verification_status === 'rejected' ? '✗ Rejected' : '⏳ Pending Verification' %>
+        </span>
+        <span class="badge <%= driver.availability_status === 'online' ? 'bg-success' : driver.availability_status === 'on_trip' ? 'bg-primary' : 'bg-secondary' %>">
+          <%= driver.availability_status.replace(/_/g,' ') %>
+        </span>
+        <% if (driver.flagged_for_review) { %>
+          <span class="badge bg-danger">⚠ Flagged for Review</span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="dpb-stats">
+    <div class="dpb-stat">
+      <span class="dpb-stat-val"><%= ratingRow.avg_rating || '—' %></span>
+      <span class="dpb-stat-label">Avg Rating</span>
+    </div>
+    <div class="dpb-stat">
+      <span class="dpb-stat-val"><%= ratingRow.total_ratings || 0 %></span>
+      <span class="dpb-stat-label">Ratings</span>
+    </div>
+    <div class="dpb-stat">
+      <span class="dpb-stat-val">PKR <%= Number(earningSummary.total_earnings || 0).toFixed(0) %></span>
+      <span class="dpb-stat-label">Total Earned</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PROFILE DETAILS + VEHICLES (full width row)
+═══════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+  <!-- Personal & Driver Details -->
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-body">
+        <h5>Profile Details</h5>
+        <div class="dpb-detail-grid">
+          <div class="dpb-detail-item">
+            <span class="dpb-detail-label">Email</span>
+            <span class="dpb-detail-val"><%= userInfo.email %></span>
+          </div>
+          <div class="dpb-detail-item">
+            <span class="dpb-detail-label">Phone</span>
+            <span class="dpb-detail-val"><%= userInfo.phone %></span>
+          </div>
+          <div class="dpb-detail-item">
+            <span class="dpb-detail-label">License No.</span>
+            <span class="dpb-detail-val"><%= driver.license_no %></span>
+          </div>
+          <div class="dpb-detail-item">
+            <span class="dpb-detail-label">CNIC / National ID</span>
+            <span class="dpb-detail-val"><%= driver.national_id %></span>
+          </div>
+          <div class="dpb-detail-item">
+            <span class="dpb-detail-label">Verification Status</span>
+            <span class="dpb-detail-val">
+              <span class="badge <%= driver.verification_status === 'verified' ? 'bg-success' : driver.verification_status === 'rejected' ? 'bg-danger' : 'bg-warning' %>">
+                <%= driver.verification_status %>
+              </span>
+            </span>
+          </div>
+          <div class="dpb-detail-item">
+            <span class="dpb-detail-label">Member Since</span>
+            <span class="dpb-detail-val"><%= new Date(userInfo.registration_date).toLocaleDateString('en-PK', {year:'numeric',month:'long',day:'numeric'}) %></span>
+          </div>
+          <% if (driver.flagged_for_review && driver.flag_reason) { %>
+          <div class="dpb-detail-item" style="grid-column:1/-1">
+            <span class="dpb-detail-label">Flag Reason</span>
+            <span class="dpb-detail-val" style="color:#c0392b"><%= driver.flag_reason %></span>
+          </div>
+          <% } %>
+        </div>
+
+        <% if (driver.verification_status === 'pending') { %>
+          <div class="reg-notice mt-3">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            Your profile is pending admin verification. You will be able to accept rides once verified.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registered Vehicles + Add Vehicle -->
+  <div class="col-lg-6">
+    <div class="card rounded-4 h-100">
+      <div class="card-body">
+        <h5>Registered Vehicles</h5>
+        <% if (!allVehicles.length) { %>
+          <p class="text-muted">No vehicles registered yet.</p>
+        <% } else { %>
+          <% allVehicles.forEach(v => { %>
+            <div class="vehicle-card mb-3">
+              <div class="vehicle-card-header">
+                <div class="vehicle-plate"><%= v.license_plate %></div>
+                <span class="badge <%= v.vehicle_type === 'premium' ? 'bg-primary' : v.vehicle_type === 'bike' ? 'bg-warning' : 'bg-secondary' %>">
+                  <%= v.vehicle_type %>
+                </span>
+                <span class="badge <%= v.verification_status === 'verified' ? 'bg-success' : v.verification_status === 'rejected' ? 'bg-danger' : 'bg-warning' %>">
+                  <%= v.verification_status %>
+                </span>
+              </div>
+              <div class="vehicle-card-body">
+                <span><strong><%= v.make %> <%= v.model %></strong> &middot; <%= v.manufacture_year %> &middot; <%= v.color %></span>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+
+        <hr class="my-3">
+        <p class="reg-section-label mb-2">Add Another Vehicle</p>
+        <form method="POST" action="/driver/add-vehicle" class="row g-2">
+          <div class="col-6">
+            <input type="text" name="make" class="form-control form-control-sm" placeholder="Make (e.g. Toyota)" required>
+          </div>
+          <div class="col-6">
+            <input type="text" name="model" class="form-control form-control-sm" placeholder="Model (e.g. Corolla)" required>
+          </div>
+          <div class="col-4">
+            <input type="number" name="manufacture_year" class="form-control form-control-sm" placeholder="Year" min="2000" max="2026" required>
+          </div>
+          <div class="col-4">
+            <input type="text" name="color" class="form-control form-control-sm" placeholder="Color" required>
+          </div>
+          <div class="col-4">
+            <select name="vehicle_type" class="form-select form-select-sm" required>
+              <option value="">Type</option>
+              <option value="economy">Economy</option>
+              <option value="premium">Premium</option>
+              <option value="bike">Bike</option>
+            </select>
+          </div>
+          <div class="col-8">
+            <input type="text" name="license_plate" class="form-control form-control-sm" placeholder="License Plate (e.g. LHR-1234)" required>
+          </div>
+          <div class="col-4">
+            <button type="submit" class="btn btn-primary btn-sm w-100">Add Vehicle</button>
+          </div>
+        </form>
+        <div class="reg-notice mt-2">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+          New vehicles are pending until admin verifies them.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN DASHBOARD ROW
+═══════════════════════════════════════════════ -->
 <div class="row g-4">
+
+  <!-- LEFT: Availability + Earnings -->
   <div class="col-lg-3">
     <div class="card shadow-sm rounded-4 mb-4"><div class="card-body">
-      <h3>Driver Dashboard</h3>
+      <h5>Availability</h5>
       <p>Status: <span class="badge text-bg-info"><%= driver.availability_status %></span></p>
       <form method="POST" action="/driver/availability" class="d-flex gap-2">
         <select name="availability_status" class="form-select">
-          <option value="online">online</option><option value="offline">offline</option><option value="on_trip">on_trip</option>
-        </select><button class="btn btn-primary">Update</button>
+          <option value="online"  <%= driver.availability_status==='online'  ? 'selected':'' %>>Online</option>
+          <option value="offline" <%= driver.availability_status==='offline' ? 'selected':'' %>>Offline</option>
+        </select>
+        <button class="btn btn-primary">Update</button>
       </form>
     </div></div>
+
     <div class="card shadow-sm rounded-4"><div class="card-body">
       <h5>Earnings</h5>
       <h3>PKR <%= Number(earningSummary.total_earnings || 0).toFixed(2) %></h3>
@@ -22,48 +192,57 @@
       <hr class="my-2">
       <p class="small fw-semibold mb-1">Payout Requests</p>
       <% payouts.forEach(p => { %>
-        <div class="d-flex justify-content-between align-items-center border rounded px-2 py-1 mb-1" style="font-size:0.82rem">
-          <span class="fw-semibold">PKR <%= Number(p.amount).toFixed(2) %></span>
+        <div class="payout-row">
+          <span class="fw-semibold payout-amount">PKR <%= Number(p.amount).toFixed(2) %></span>
           <div class="d-flex align-items-center gap-2">
             <span class="text-muted"><%= new Date(p.requested_at).toLocaleDateString() %></span>
-            <span class="badge <%= p.payout_status === 'paid' ? 'bg-success' : p.payout_status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>"><%= p.payout_status %></span>
+            <span class="badge <%= p.payout_status==='paid'?'bg-success':p.payout_status==='rejected'?'bg-danger':'bg-warning' %>"><%= p.payout_status %></span>
           </div>
         </div>
       <% }) %>
       <% } %>
     </div></div>
   </div>
+
+  <!-- MIDDLE: Ride Requests -->
   <div class="col-lg-5">
     <div class="card shadow-sm rounded-4"><div class="card-body">
       <h5>Available Ride Requests</h5>
-      <% if (driver.availability_status === 'offline') { %>
-        <div class="alert alert-secondary d-flex align-items-center gap-2 mb-0">
-          <div>You are <strong>offline</strong>. Switch to <strong>Online</strong> to start receiving ride requests.</div>
+      <% if (driver.verification_status !== 'verified') { %>
+        <div class="alert alert-warning mb-0">
+          Your account is <strong>pending verification</strong>. Once an admin verifies your profile and vehicle, you can start accepting rides.
         </div>
+      <% } else if (driver.availability_status === 'offline') { %>
+        <div class="alert alert-secondary mb-0">You are <strong>offline</strong>. Switch to <strong>Online</strong> to start receiving ride requests.</div>
       <% } else if (driver.availability_status === 'on_trip') { %>
-        <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
-          <div>You are currently <strong>on a trip</strong>. Complete your active ride before accepting a new one.</div>
-        </div>
+        <div class="alert alert-warning mb-0">You are currently <strong>on a trip</strong>. Complete your active ride before accepting a new one.</div>
       <% } else { %>
-        <% if (!vehicles.length) { %><div class="alert alert-warning">No verified vehicle found for this driver.</div><% } %>
+        <% if (!vehicles.length) { %><div class="alert alert-warning">No verified vehicle found. Ask admin to verify your vehicle.</div><% } %>
         <div class="table-responsive"><table class="table table-hover">
           <thead><tr><th>Ride</th><th>Rider</th><th>Route</th><th>Action</th></tr></thead><tbody>
           <% requested.forEach(r => { %>
-            <tr><td><%= r.ride_id %></td><td><%= r.rider_name %></td><td><%= r.pickup_label %> → <%= r.dropoff_label %></td><td>
-              <form method="POST" action="/driver/accept/<%= r.ride_id %>" class="mb-1">
-                <select name="vehicle_id" class="form-select form-select-sm mb-1">
-                  <% vehicles.forEach(v => { %><option value="<%= v.vehicle_id %>"><%= v.license_plate %> · <%= v.vehicle_type %></option><% }) %>
-                </select>
-                <button class="btn btn-sm btn-primary" <%= vehicles.length ? '' : 'disabled' %>>Accept</button>
-              </form>
-              <form method="POST" action="/driver/reject/<%= r.ride_id %>"><button class="btn btn-sm btn-outline-secondary">Reject</button></form>
-            </td></tr>
+            <tr>
+              <td><%= r.ride_id %></td>
+              <td><%= r.rider_name %></td>
+              <td><%= r.pickup_label %> → <%= r.dropoff_label %></td>
+              <td>
+                <form method="POST" action="/driver/accept/<%= r.ride_id %>" class="mb-1">
+                  <select name="vehicle_id" class="form-select form-select-sm mb-1">
+                    <% vehicles.forEach(v => { %><option value="<%= v.vehicle_id %>"><%= v.license_plate %> · <%= v.vehicle_type %></option><% }) %>
+                  </select>
+                  <button class="btn btn-sm btn-primary" <%= vehicles.length ? '' : 'disabled' %>>Accept</button>
+                </form>
+                <form method="POST" action="/driver/reject/<%= r.ride_id %>"><button class="btn btn-sm btn-outline-secondary">Reject</button></form>
+              </td>
+            </tr>
           <% }) %>
           <% if (!requested.length) { %><tr><td colspan="4" class="text-muted">No ride requests right now. Stay online!</td></tr><% } %>
           </tbody></table></div>
       <% } %>
     </div></div>
   </div>
+
+  <!-- RIGHT: My Trips -->
   <div class="col-lg-4">
     <div class="card shadow-sm rounded-4"><div class="card-body">
       <h5>My Trips</h5>
@@ -102,6 +281,8 @@
     </div></div>
   </div>
 </div>
+
+<!-- Complaint -->
 <div class="row g-4 mt-1">
   <div class="col-12">
     <div class="card shadow-sm rounded-4"><div class="card-body">
@@ -117,4 +298,5 @@
     </div></div>
   </div>
 </div>
+
 <%- include('partials_footer') %>

@@ -22,7 +22,18 @@
 
     <hr class="my-4">
 
-    
+    <p class="text-center mb-2" style="font-size:0.82rem;color:var(--rf-300);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">New to RideFlow?</p>
+    <div class="d-flex gap-2">
+      <a href="/register?role=rider" class="btn btn-outline-secondary w-100" id="registerRiderBtn" style="font-size:0.84rem;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Register as Rider
+      </a>
+      <a href="/register?role=driver" class="btn btn-outline-secondary w-100" id="registerDriverBtn" style="font-size:0.84rem;">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px;"><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M16 9V7a4 4 0 0 0-8 0v2"/><circle cx="7.5" cy="18" r="2.5"/><circle cx="16.5" cy="18" r="2.5"/></svg>
+        Register as Driver
+      </a>
+    </div>
+
   </div>
 </div>
 <%- include('partials_footer') %>

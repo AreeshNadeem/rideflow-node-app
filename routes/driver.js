@@ -9,9 +9,18 @@ router.get('/', async (req, res, next) => {
   try {
     const driverId = req.session.user.user_id;
     const [[driver]] = await db.query('SELECT * FROM drivers WHERE driver_id=?', [driverId]);
-    const [vehicles] = await db.query("SELECT * FROM vehicles WHERE driver_id=? AND verification_status='verified'", [driverId]);
-    // Only show available ride requests when driver is online
-    const [requested] = driver.availability_status === 'online'
+    const [[userInfo]] = await db.query('SELECT first_name, last_name, email, phone, registration_date FROM users WHERE user_id=?', [driverId]);
+    // All vehicles (for profile display, including pending)
+    const [allVehicles] = await db.query('SELECT * FROM vehicles WHERE driver_id=? ORDER BY vehicle_id DESC', [driverId]);
+    // Only verified vehicles (for accepting rides)
+    const vehicles = allVehicles.filter(v => v.verification_status === 'verified');
+    // Driver average rating
+    const [[ratingRow]] = await db.query(
+      'SELECT ROUND(AVG(score),2) AS avg_rating, COUNT(*) AS total_ratings FROM ratings WHERE rated_user_id=?', [driverId]
+    );
+    // Only show available ride requests when driver is online & verified
+    const canAccept = driver.availability_status === 'online' && driver.verification_status === 'verified';
+    const [requested] = canAccept
       ? await db.query(`
           SELECT r.*, CONCAT(u.first_name,' ',u.last_name) AS rider_name, p.label AS pickup_label, p.city AS pickup_city,
                  d.label AS dropoff_label, d.city AS dropoff_city
@@ -38,7 +47,7 @@ router.get('/', async (req, res, next) => {
     const [payouts] = await db.query(
       'SELECT * FROM driver_payouts WHERE driver_id=? ORDER BY requested_at DESC',
       [driverId]);
-    res.render('driver', { driver, vehicles, requested, myRides, earningSummary: earnings[0], payouts });
+    res.render('driver', { driver, userInfo, vehicles, allVehicles, ratingRow, requested, myRides, earningSummary: earnings[0], payouts });
   } catch (err) { next(err); }
 });
 
@@ -134,6 +143,34 @@ router.post('/complaint', async (req, res, next) => {
       [ride_id || null, req.session.user.user_id, reported_against_user_id || null, complaint_type, description]
     );
     req.session.flash = { type: 'success', message: 'Complaint submitted to admin.' };
+    res.redirect('/driver');
+  } catch (err) { next(err); }
+});
+
+// ── POST /add-vehicle — driver adds a new vehicle (starts as pending) ─────────
+router.post('/add-vehicle', async (req, res, next) => {
+  try {
+    const { make, model, manufacture_year, color, license_plate, vehicle_type } = req.body;
+    const driverId = req.session.user.user_id;
+
+    if (!make || !model || !manufacture_year || !color || !license_plate || !vehicle_type) {
+      req.session.flash = { type: 'danger', message: 'All vehicle fields are required.' };
+      return res.redirect('/driver');
+    }
+
+    // Check plate uniqueness
+    const [[dup]] = await db.query('SELECT vehicle_id FROM vehicles WHERE license_plate=? LIMIT 1', [license_plate.trim().toUpperCase()]);
+    if (dup) {
+      req.session.flash = { type: 'danger', message: 'That license plate is already registered.' };
+      return res.redirect('/driver');
+    }
+
+    await db.query(
+      `INSERT INTO vehicles (driver_id, make, model, manufacture_year, color, license_plate, vehicle_type, verification_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [driverId, make.trim(), model.trim(), manufacture_year, color.trim(), license_plate.trim().toUpperCase(), vehicle_type]
+    );
+    req.session.flash = { type: 'success', message: 'Vehicle added and submitted for admin verification.' };
     res.redirect('/driver');
   } catch (err) { next(err); }
 });

@@ -494,6 +494,98 @@ hr { border-color: rgba(189,216,233,0.4); opacity: 1; }
 }
 .login-hint b { color: var(--rf-700); }
 
+/* ---- Register page --------------------------------------- */
+.reg-wrap {
+  min-height: calc(100vh - 58px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2.5rem 1rem 3rem;
+  background: linear-gradient(135deg, var(--rf-bg) 0%, #ddeef8 100%);
+}
+
+.reg-card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  padding: 2.25rem 2.25rem 2rem;
+}
+
+/* Tabs */
+.reg-tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--rf-50);
+  border: 1.5px solid var(--rf-100);
+  border-radius: var(--radius-md);
+  padding: 5px;
+}
+
+.reg-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--rf-500);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.reg-tab:hover {
+  background: rgba(189,216,233,0.4);
+  color: var(--rf-700);
+}
+
+.reg-tab.active {
+  background: var(--rf-700);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(10,65,116,.25);
+}
+
+/* Section label inside forms */
+.reg-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rf-400);
+  margin-bottom: 0.6rem;
+  margin-top: 0.25rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1.5px solid var(--rf-100);
+}
+
+/* Driver pending notice */
+.reg-notice {
+  background: rgba(123,189,232,.1);
+  border: 1px solid var(--rf-100);
+  border-left: 3px solid var(--rf-300);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.79rem;
+  color: var(--rf-500);
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  line-height: 1.5;
+}
+
+.reg-notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--rf-300);
+}
+
 /* ---- Scrollbar ------------------------------------------- */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--rf-bg); }
@@ -532,4 +624,152 @@ td .badge { vertical-align: middle; }
 @media (max-width: 768px) {
   main.container-fluid { padding: 1rem; }
   .stat-card h3 { font-size: 1.3rem; }
+  .driver-profile-banner { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .dpb-stats { width: 100%; justify-content: space-between; }
 }
+
+/* ---- Driver Profile Banner -------------------------------- */
+.driver-profile-banner {
+  background: linear-gradient(135deg, var(--rf-900) 0%, var(--rf-700) 100%);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.dpb-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.dpb-avatar {
+  width: 60px;
+  height: 60px;
+  background: rgba(123,189,232,0.2);
+  border: 2px solid rgba(123,189,232,0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--rf-200);
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+.dpb-name {
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.dpb-role-badge {
+  background: rgba(123,189,232,0.18);
+  color: var(--rf-200);
+  border: 1px solid rgba(123,189,232,0.3);
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dpb-stats {
+  display: flex;
+  gap: 2rem;
+  flex-shrink: 0;
+}
+
+.dpb-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.dpb-stat-val {
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.dpb-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Driver profile detail grid */
+.dpb-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 1rem;
+}
+
+.dpb-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dpb-detail-label {
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rf-300);
+}
+
+.dpb-detail-val {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--rf-900);
+}
+
+/* Vehicle card */
+.vehicle-card {
+  border: 1.5px solid rgba(189,216,233,0.5);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.vehicle-card-header {
+  background: var(--rf-50);
+  padding: 0.55rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(189,216,233,0.4);
+}
+
+.vehicle-plate {
+  font-family: var(--font-head);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--rf-700);
+  letter-spacing: 0.04em;
+  flex: 1;
+}
+
+.vehicle-card-body {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.84rem;
+  color: var(--rf-500);
+}
+
