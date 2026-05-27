@@ -1,0 +1,187 @@
+<%- include('partials_header') %>
+
+<div class="reg-wrap">
+  <div class="reg-card">
+
+    <!-- Logo -->
+    <div class="login-logo mb-1">Ride<span>Flow</span></div>
+    <p class="login-sub">Create your account — select your role below.</p>
+
+    <% if (flash) { %>
+      <div class="alert alert-<%= flash.type %> mb-3"><%= flash.message %></div>
+    <% } %>
+
+    <!-- Role Tabs -->
+    <div class="reg-tabs mb-4" id="regTabs">
+      <button class="reg-tab active" id="tab-rider" onclick="switchTab('rider')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        Register as Rider
+      </button>
+      <button class="reg-tab" id="tab-driver" onclick="switchTab('driver')">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M16 9V7a4 4 0 0 0-8 0v2"/><circle cx="7.5" cy="18" r="2.5"/><circle cx="16.5" cy="18" r="2.5"/></svg>
+        Register as Driver
+      </button>
+    </div>
+
+    <!-- ======================== RIDER FORM ======================== -->
+    <form id="form-rider" method="POST" action="/register" autocomplete="off">
+      <input type="hidden" name="role" value="rider">
+
+      <div class="reg-section-label">Personal Information</div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <label class="form-label">First Name</label>
+          <input type="text" name="first_name" class="form-control" required placeholder="Ali" id="riderFirstName">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-control" required placeholder="Khan" id="riderLastName">
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Email Address</label>
+        <input type="email" name="email" class="form-control" required placeholder="ali@example.com" id="riderEmail">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Phone Number</label>
+        <input type="tel" name="phone" class="form-control" required placeholder="03001234567" id="riderPhone">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required placeholder="Min. 6 characters" minlength="6" id="riderPassword">
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" name="confirm_password" class="form-control" required placeholder="Repeat password" id="riderConfirmPassword">
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" id="riderRegisterBtn" style="padding:0.6rem;font-size:0.95rem;">
+        Create Rider Account
+      </button>
+    </form>
+
+    <!-- ======================== DRIVER FORM ======================== -->
+    <form id="form-driver" method="POST" action="/register" autocomplete="off" style="display:none;">
+      <input type="hidden" name="role" value="driver">
+
+      <div class="reg-section-label">Personal Information</div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <label class="form-label">First Name</label>
+          <input type="text" name="first_name" class="form-control" required placeholder="Ahmed" id="driverFirstName">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-control" required placeholder="Raza" id="driverLastName">
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Email Address</label>
+        <input type="email" name="email" class="form-control" required placeholder="ahmed@example.com" id="driverEmail">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Phone Number</label>
+        <input type="tel" name="phone" class="form-control" required placeholder="03009876543" id="driverPhone">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required placeholder="Min. 6 characters" minlength="6" id="driverPassword">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" name="confirm_password" class="form-control" required placeholder="Repeat password" id="driverConfirmPassword">
+      </div>
+
+      <div class="reg-section-label">Driver Details</div>
+
+      <div class="mb-2">
+        <label class="form-label">License Number</label>
+        <input type="text" name="license_no" class="form-control" required placeholder="e.g. LHR-2024-123456" id="driverLicense">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">CNIC / National ID</label>
+        <input type="text" name="national_id" class="form-control" required placeholder="35202-1234567-8" id="driverCnic">
+      </div>
+
+      <div class="reg-section-label">Vehicle Information</div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <label class="form-label">Make</label>
+          <input type="text" name="make" class="form-control" required placeholder="Toyota" id="vMake">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Model</label>
+          <input type="text" name="model" class="form-control" required placeholder="Corolla" id="vModel">
+        </div>
+      </div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-4">
+          <label class="form-label">Year</label>
+          <input type="number" name="manufacture_year" class="form-control" required placeholder="2020" min="2000" max="2026" id="vYear">
+        </div>
+        <div class="col-4">
+          <label class="form-label">Color</label>
+          <input type="text" name="color" class="form-control" required placeholder="White" id="vColor">
+        </div>
+        <div class="col-4">
+          <label class="form-label">Type</label>
+          <select name="vehicle_type" class="form-select" required id="vType">
+            <option value="">Select</option>
+            <option value="economy">Economy</option>
+            <option value="premium">Premium</option>
+            <option value="bike">Bike</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">License Plate</label>
+        <input type="text" name="license_plate" class="form-control" required placeholder="LHR-1234" id="vPlate">
+      </div>
+
+      <div class="reg-notice mb-4">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+        Your account and vehicle will be reviewed by an admin before you can accept rides.
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" id="driverRegisterBtn" style="padding:0.6rem;font-size:0.95rem;">
+        Create Driver Account
+      </button>
+    </form>
+
+    <hr class="my-3">
+    <p class="text-center" style="font-size:0.84rem; color:var(--rf-300);">
+      Already have an account?
+      <a href="/" style="color:var(--rf-700); font-weight:600; text-decoration:none;">Sign In</a>
+    </p>
+
+  </div>
+</div>
+
+<script>
+function switchTab(role) {
+  document.getElementById('form-rider').style.display  = role === 'rider'  ? '' : 'none';
+  document.getElementById('form-driver').style.display = role === 'driver' ? '' : 'none';
+  document.getElementById('tab-rider').classList.toggle('active',  role === 'rider');
+  document.getElementById('tab-driver').classList.toggle('active', role === 'driver');
+}
+
+// Pre-select tab from query string
+const params = new URLSearchParams(window.location.search);
+if (params.get('role') === 'driver') switchTab('driver');
+</script>
+
+<%- include('partials_footer') %>
